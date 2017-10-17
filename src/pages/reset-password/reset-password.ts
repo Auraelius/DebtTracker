@@ -1,25 +1,74 @@
 import { Component } from '@angular/core';
-import { IonicPage, NavController, NavParams } from 'ionic-angular';
-
-/**
- * Generated class for the ResetPasswordPage page.
- *
- * See https://ionicframework.com/docs/components/#navigation for more info on
- * Ionic pages and navigation.
- */
+import {
+  IonicPage,
+  NavController,
+  Alert,
+  AlertController
+} from 'ionic-angular';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuthProvider } from '../../providers/auth/auth';
 
 @IonicPage()
 @Component({
   selector: 'page-reset-password',
-  templateUrl: 'reset-password.html',
+  templateUrl: 'reset-password.html'
 })
 export class ResetPasswordPage {
+  public resetPasswordForm: FormGroup;
 
-  constructor(public navCtrl: NavController, public navParams: NavParams) {
+  constructor(
+    public navCtrl: NavController,
+    public alertCtrl: AlertController,
+    public authProvider: AuthProvider,
+    formBuilder: FormBuilder
+  ) {
+    this.resetPasswordForm = formBuilder.group({
+      email: ['', Validators.required]
+    });
   }
 
-  ionViewDidLoad() {
-    console.log('ionViewDidLoad ResetPasswordPage');
-  }
+  resetPassword(): void {
+    if (!this.resetPasswordForm.valid) {
+      console.log(this.resetPasswordForm.value);
+    } else {
+      const email: string = this.resetPasswordForm.value.email;
 
+      this.authProvider.resetPassword(email).then(
+        user => {
+          const alert: Alert = this.alertCtrl.create({
+            message: 'We just sent you a reset link to your email',
+            buttons: [
+              {
+                text: 'Ok',
+                role: 'cancel',
+                handler: () => { // send user back to where they were
+                  this.navCtrl.pop();
+                }
+              }
+            ]
+          });
+          alert.present();
+        },
+        error => {
+          console.log("Login error: ", error.message);
+          // todo should we log password reset errors? What can we learn?
+          // todo create a more user-friendly experience
+          // what do these error messages look like?
+          var errorMessage: string = error.message;
+          
+          const errorAlert: Alert = this.alertCtrl.create({
+            message: errorMessage,
+            buttons: [
+              {
+                text: 'Ok',
+                role: 'cancel'
+              }
+            ]
+          });
+
+          errorAlert.present();
+        }
+      );
+    }
+  }
 }
